@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Stackd | Premium Startup Marketplace</title>
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+
+<div id="app">
+  <nav class="nav">
+    <div class="nav-logo" onclick="app.navigate('/')">
+      <span>S</span> Stackd
+    </div>
+    <div class="nav-links">
+      <button class="nav-btn" onclick="app.navigate('/explore')">Explore</button>
+      <button class="nav-btn" id="dashNavBtn" onclick="app.navigate('/dashboard')" style="display:none">Dashboard</button>
+    </div>
+    <div id="navAuth">
+      <button class="btn-secondary" style="margin-right:8px; padding:6px 14px; font-size:13px;" onclick="app.navigate('/login')">Sign in</button>
+      <button class="nav-cta" onclick="app.navigate('/register')">Join free</button>
+    </div>
+    <div id="navUser" style="display:none;align-items:center;gap:8px;">
+      <span id="navUserName" style="font-size:13px;color:var(--text2);"></span>
+      <div class="nav-avatar" id="navAvatar" onclick="app.navigate('/dashboard')">U</div>
+      <button class="nav-btn" onclick="app.logout()">Out</button>
+    </div>
+  </nav>
+
+  <!-- LANDING -->
+  <div class="page active" id="page-landing">
+    <div class="hero">
+      <div class="hero-tag animate-fade">Now live — 2,400+ startups</div>
+      <h1 class="animate-slide">Where <em>founders</em> meet<br>their next chapter</h1>
+      <p class="animate-slide">The premium marketplace connecting ambitious founders with the investors who back ideas that matter. Discover, analyze, and invest in tomorrow.</p>
+      <div class="hero-actions animate-slide">
+        <button class="btn-primary" onclick="app.navigate('/explore')">Explore startups</button>
+        <button class="btn-secondary" onclick="app.navigate('/register')">List your startup</button>
+      </div>
+      <div class="stats-bar animate-fade">
+        <div class="stat-item"><div class="stat-num">2,400+</div><div class="stat-label">startups listed</div></div>
+        <div class="stat-item"><div class="stat-num">$840M</div><div class="stat-label">capital deployed</div></div>
+        <div class="stat-item"><div class="stat-num">18K</div><div class="stat-label">investors active</div></div>
+      </div>
+    </div>
+
+    <div class="featured-section animate-slide">
+      <div class="section-header">
+        <span class="section-title">Trending this week</span>
+        <button class="section-link" onclick="app.navigate('/explore')">View all →</button>
+      </div>
+      <div class="card-grid" id="landingCards"></div>
+    </div>
+
+    <div class="featured-section animate-slide" style="max-width:1000px; margin-top: 80px;">
+      <div class="section-header" style="justify-content:center; text-align:center; margin-bottom: 40px;">
+        <div>
+          <div class="section-title" style="font-size:24px;">Everything you need to exit</div>
+          <div style="font-size:14px;color:var(--text2);margin-top:8px;">Powerful tools for founders and serious investors.</div>
+        </div>
+      </div>
+      <div class="features-grid">
+        <div class="feature-card">
+          <div class="feature-icon">🔍</div>
+          <div class="feature-title">Advanced Filtering</div>
+          <div class="feature-desc">Find exactly what you're looking for with deep industry and stage-based filtering.</div>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">✉️</div>
+          <div class="feature-title">Direct Messaging</div>
+          <div class="feature-desc">Securely communicate with founders or investors directly through our platform.</div>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">📈</div>
+          <div class="feature-title">Deal Flow Tracking</div>
+          <div class="feature-desc">Investors can manage their entire pipeline with our built-in deal flow tracker.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="how-it-works animate-slide">
+      <div style="font-size:24px;font-weight:700;">How it works</div>
+      <div class="how-grid">
+        <div class="how-step">
+          <div class="how-num">01</div>
+          <div class="how-title">List or Discover</div>
+          <div class="how-desc">Founders list their startups while investors browse high-potential ventures.</div>
+        </div>
+        <div class="how-step">
+          <div class="how-num">02</div>
+          <div class="how-title">Due Diligence</div>
+          <div class="how-desc">Analyze metrics, read descriptions, and engage in meaningful discussions.</div>
+        </div>
+        <div class="how-step">
+          <div class="how-num">03</div>
+          <div class="how-title">Close the Deal</div>
+          <div class="how-desc">Connect directly to finalize investments and start the next chapter.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="footer animate-fade">
+      <div class="footer-logo">Stackd</div>
+      <div class="footer-links">
+        <span class="footer-link">About</span>
+        <span class="footer-link">Privacy</span>
+        <span class="footer-link">Terms</span>
+        <span class="footer-link">Contact</span>
+      </div>
+      <div class="footer-copy">© 2026 Stackd. All rights reserved.</div>
+    </div>
+  </div>
+
+  <!-- EXPLORE -->
+  <div class="page" id="page-explore">
+    <div class="explore-header">
+      <h2>Explore Startups</h2>
+      <div class="search-row">
+        <input class="search-input" type="text" id="searchInput" placeholder="Search by name, industry..." oninput="app.filterStartups()">
+      </div>
+      <div class="filter-row" id="filterRow"></div>
+    </div>
+    <div class="explore-grid" id="exploreGrid"></div>
+  </div>
+
+  <!-- DETAIL -->
+  <div class="page" id="page-detail">
+    <div class="detail-wrapper">
+      <div id="detailContent"></div>
+    </div>
+  </div>
+
+  <!-- AUTH: LOGIN -->
+  <div class="page" id="page-login">
+    <div class="auth-wrapper">
+      <div class="auth-card">
+        <div class="auth-title">Welcome back</div>
+        <div class="auth-sub">Enter your details to access your account</div>
+        <div class="form-group"><label class="form-label">EMAIL ADDRESS</label><input class="form-input" id="loginEmail" placeholder="founder@stackd.dev"></div>
+        <div class="form-group"><label class="form-label">PASSWORD</label><input class="form-input" type="password" id="loginPwd" placeholder="••••••••"></div>
+        <button class="btn-block" onclick="app.doLogin()">Sign in</button>
+        <div class="auth-switch">Don't have an account? <button onclick="app.navigate('/register')">Join free</button></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- AUTH: REGISTER -->
+  <div class="page" id="page-register">
+    <div class="auth-wrapper">
+      <div class="auth-card">
+        <div class="auth-title">Create account</div>
+        <div class="auth-sub">Join the premium startup marketplace</div>
+        <div class="role-tabs">
+          <div class="role-tab active" id="roleFounder" onclick="app.selectRole('founder')">Founder</div>
+          <div class="role-tab" id="roleInvestor" onclick="app.selectRole('investor')">Investor</div>
+        </div>
+        <div class="form-group"><label class="form-label">FULL NAME</label><input class="form-input" id="regName" placeholder="Alex Rivera"></div>
+        <div class="form-group"><label class="form-label">EMAIL ADDRESS</label><input class="form-input" id="regEmail" placeholder="alex@startup.com"></div>
+        <div class="form-group"><label class="form-label">PASSWORD</label><input class="form-input" type="password" id="regPwd" placeholder="Min 8 characters"></div>
+        <button class="btn-block" onclick="app.doRegister()">Create account</button>
+        <div class="auth-switch">Already have an account? <button onclick="app.navigate('/login')">Sign in</button></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- DASHBOARD -->
+  <div class="page" id="page-dashboard">
+    <div class="dash-layout">
+      <div class="dash-sidebar">
+        <div class="dash-sidebar-title" id="dashRoleLabel">FOUNDER</div>
+        <div class="dash-nav-item active" id="dnOverview" onclick="app.showDash('overview')">Overview</div>
+        <div class="dash-nav-item" id="dnListings" onclick="app.showDash('listings')">My Startups</div>
+        <div class="dash-nav-item" id="dnSaved" onclick="app.showDash('saved')">Saved</div>
+        <div class="dash-nav-item" id="dnLiked" onclick="app.showDash('liked')">Liked</div>
+        <div class="dash-nav-item" id="dnDealflow" onclick="app.showDash('dealflow')" style="display:none">Deal Flow</div>
+        <div class="dash-nav-item" id="dnInbox" onclick="app.showDash('inbox')">Inbox</div>
+        <div class="dash-nav-item" id="dnUsers" onclick="app.showDash('users')" style="display:none">Users</div>
+        <div style="height:20px"></div>
+        <div class="dash-sidebar-title">ACCOUNT</div>
+        <div class="dash-nav-item" id="dnProfile" onclick="app.showDash('profile')">Profile</div>
+        <div class="dash-nav-item" id="dnSettings" onclick="app.showDash('settings')">Settings</div>
+      </div>
+      <div class="dash-content">
+        <div class="dash-section active" id="ds-overview">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:24px;">
+            <div>
+              <div class="dash-title" id="dashWelcome" style="margin-bottom:4px;">Welcome back</div>
+              <div style="font-size:13px;color:var(--text3);">Here is what's happening with your ventures today.</div>
+            </div>
+            <button class="nav-cta" id="dashNewBtn" onclick="app.openNewStartupModal()">+ New startup</button>
+          </div>
+          <div class="dash-grid" id="dashMetrics"></div>
+          <div id="dashRecentContent"></div>
+        </div>
+        
+        <div class="dash-section" id="ds-listings">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
+            <div class="dash-title" style="margin-bottom:0">My Startups</div>
+            <button class="nav-cta" onclick="app.openNewStartupModal()">+ New startup</button>
+          </div>
+          <div id="myListings"></div>
+        </div>
+
+        <div class="dash-section" id="ds-saved">
+          <div class="dash-title">Saved Startups</div>
+          <div id="savedListings"></div>
+        </div>
+
+        <div class="dash-section" id="ds-liked">
+          <div class="dash-title">Liked Startups</div>
+          <div id="likedListings"></div>
+        </div>
+
+        <div class="dash-section" id="ds-dealflow">
+          <div class="dash-title">Deal Flow Tracker</div>
+          <div id="dealflowContent"></div>
+        </div>
+
+        <div class="dash-section" id="ds-inbox">
+          <div class="dash-title">Inbox</div>
+          <div id="inboxList"></div>
+        </div>
+
+        <div class="dash-section" id="ds-users">
+          <div class="dash-title">User Management</div>
+          <div id="adminUsers"></div>
+        </div>
+
+        <div class="dash-section" id="ds-profile">
+          <div class="dash-title">Public Profile</div>
+          <div id="profileContent"></div>
+        </div>
+
+        <div class="dash-section" id="ds-settings">
+          <div class="dash-title">Settings</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;">
+            <div style="background:var(--bg);border:0.5px solid var(--border);border-radius:var(--rl);padding:24px;">
+              <div style="font-size:16px;font-weight:600;margin-bottom:16px;">General Information</div>
+              <div class="form-group"><label class="form-label">FULL NAME</label><input class="form-input" id="set-name"></div>
+              <div class="form-group"><label class="form-label">BIO</label><input class="form-input" id="set-bio" placeholder="Tell people about yourself"></div>
+              <div class="form-group"><label class="form-label">LOCATION</label><input class="form-input" id="set-location"></div>
+              <div class="form-group"><label class="form-label">WEBSITE</label><input class="form-input" id="set-website"></div>
+              <button class="btn-primary" onclick="app.updateProfile()">Update Profile</button>
+            </div>
+            <div style="background:var(--bg);border:0.5px solid var(--border);border-radius:var(--rl);padding:24px;">
+              <div style="font-size:16px;font-weight:600;margin-bottom:16px;">Change Password</div>
+              <div class="form-group"><label class="form-label">CURRENT PASSWORD</label><input class="form-input" type="password" id="set-old-pwd"></div>
+              <div class="form-group"><label class="form-label">NEW PASSWORD</label><input class="form-input" type="password" id="set-new-pwd"></div>
+              <button class="btn-primary" onclick="app.changePassword()">Change Password</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- USER PROFILE -->
+  <div class="page" id="page-user-profile">
+    <div class="detail-wrapper">
+      <button class="detail-back" onclick="app.navigate('/explore')">← Back</button>
+      <div id="userProfileContent"></div>
+    </div>
+  </div>
+</div><!-- end #app -->
+
+<!-- NEW STARTUP MODAL -->
+<div class="modal-overlay" id="newStartupModal">
+  <div class="modal">
+    <div class="modal-close" onclick="app.closeModal('newStartupModal')">&times;</div>
+    <div class="modal-title">List a new startup</div>
+    <div class="form-group">
+      <label class="form-label">STARTUP NAME</label>
+      <input class="form-input" id="nsName" placeholder="e.g. Acme AI">
+    </div>
+    <div class="form-group">
+      <label class="form-label">TAGLINE</label>
+      <input class="form-input" id="nsTagline" placeholder="One sentence pitch">
+    </div>
+    <div class="form-group">
+      <label class="form-label">DESCRIPTION</label>
+      <textarea class="form-input" id="nsDesc" rows="4" placeholder="Tell investors more..."></textarea>
+    </div>
+    <div class="form-group">
+      <label class="form-label">INDUSTRY</label>
+      <select class="form-select" id="nsIndustry">
+        <option>AI / ML</option><option>Fintech</option><option>Health</option><option>Climate</option><option>SaaS</option><option>Consumer</option><option>EdTech</option><option>Web3</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label class="form-label">FUNDING STAGE</label>
+      <select class="form-select" id="nsStage">
+        <option>Idea</option><option>Pre-seed</option><option>Seed</option><option>Series A</option><option>Series B</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label class="form-label">LOCATION</label>
+      <input class="form-input" id="nsLocation" placeholder="e.g. San Francisco, CA">
+    </div>
+    <div style="display:flex;gap:10px;margin-top:8px;">
+      <button class="btn-primary" style="flex:1;" onclick="app.submitNewStartup()">Publish startup</button>
+      <button class="btn-secondary" style="flex:1;" onclick="app.closeModal('newStartupModal')">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- EDIT STARTUP MODAL -->
+<div class="modal-overlay" id="editStartupModal">
+  <div class="modal">
+    <div class="modal-close" onclick="app.closeModal('editStartupModal')">&times;</div>
+    <div class="modal-title">Edit startup</div>
+    <div class="form-group">
+      <label class="form-label">STARTUP NAME</label>
+      <input class="form-input" id="esName">
+    </div>
+    <div class="form-group">
+      <label class="form-label">TAGLINE</label>
+      <input class="form-input" id="esTagline">
+    </div>
+    <div class="form-group">
+      <label class="form-label">DESCRIPTION</label>
+      <textarea class="form-input" id="esDesc" rows="4"></textarea>
+    </div>
+    <div class="form-group">
+      <label class="form-label">INDUSTRY</label>
+      <select class="form-select" id="esIndustry">
+        <option>AI / ML</option><option>Fintech</option><option>Health</option><option>Climate</option><option>SaaS</option><option>Consumer</option><option>EdTech</option><option>Web3</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label class="form-label">FUNDING STAGE</label>
+      <select class="form-select" id="esStage">
+        <option>Idea</option><option>Pre-seed</option><option>Seed</option><option>Series A</option><option>Series B</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label class="form-label">LOCATION</label>
+      <input class="form-input" id="esLocation">
+    </div>
+    <div style="display:flex;gap:10px;margin-top:8px;">
+      <button class="btn-primary" style="flex:1;" onclick="app.submitEditStartup()">Save changes</button>
+      <button class="btn-secondary" style="flex:1;" onclick="app.closeModal('editStartupModal')">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- MESSAGE MODAL -->
+<div class="modal-overlay" id="messageModal">
+  <div class="modal">
+    <div class="modal-close" onclick="app.closeModal('messageModal')">&times;</div>
+    <div class="modal-title">Send Message</div>
+    <div class="form-group">
+      <label class="form-label">TO</label>
+      <input class="form-input" id="msgTo" readonly style="background:var(--bg)">
+    </div>
+    <div class="form-group">
+      <label class="form-label">MESSAGE</label>
+      <textarea class="form-input" id="msgContent" rows="4" placeholder="Hi! I'd love to learn more..."></textarea>
+    </div>
+    <div style="display:flex;gap:10px;margin-top:8px;">
+      <button class="btn-primary" style="flex:1;" onclick="app.sendMessage()">Send</button>
+      <button class="btn-secondary" style="flex:1;" onclick="app.closeModal('messageModal')">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- VIEW MESSAGE MODAL -->
+<div class="modal-overlay" id="viewMessageModal">
+  <div class="modal">
+    <div class="modal-close" onclick="app.closeModal('viewMessageModal')">&times;</div>
+    <div class="modal-title">Conversation</div>
+    <div id="viewMessageContent">
+      <div style="margin-bottom:16px;">
+        <div style="font-size:12px;color:var(--text3);text-transform:uppercase;margin-bottom:4px;">FROM</div>
+        <div id="vmFrom" style="font-weight:600;font-size:14px;"></div>
+      </div>
+      <div style="margin-bottom:20px;">
+        <div style="font-size:12px;color:var(--text3);text-transform:uppercase;margin-bottom:4px;">CONTENT</div>
+        <div id="vmContent" style="font-size:14px;line-height:1.6;white-space:pre-wrap;"></div>
+      </div>
+      <div style="display:flex;gap:10px;">
+        <button class="btn-primary" style="flex:1;" id="vmReplyBtn">Reply</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script type="module" src="/js/app.js"></script>
+</body>
+</html>
