@@ -135,29 +135,65 @@ function openStartup(id) {
 async function toggleLike(id) {
   if (!state.user) return showToast('Sign in to upvote');
   
-  // Optimistic UI Update
+  const isLiked = state.likedStartups.has(id);
   const likeBtn = document.getElementById('likeBtn');
-  const countEl = document.getElementById('likeCount');
+  const countEl = document.getElementById('btnLikes');
+  const metricEl = document.getElementById('metricLikes');
+
+  // 1. Optimistic UI Update
   if (likeBtn && countEl) {
-    const isLiked = state.likedStartups.has(id);
     const count = parseInt(countEl.innerText);
     countEl.innerText = isLiked ? count - 1 : count + 1;
-    likeBtn.innerText = isLiked ? '▲ Upvote' : '▲ Upvoted';
-    likeBtn.classList.toggle('active');
+    if (metricEl) metricEl.innerText = countEl.innerText;
+    
+    likeBtn.classList.toggle('liked', !isLiked);
+    likeBtn.innerHTML = !isLiked ? `♥ Liked (<span id="btnLikes">${count + 1}</span>)` : `♡ Upvote (<span id="btnLikes">${count - 1}</span>)`;
   }
 
+  // 2. Local State Update
+  if (!isLiked) state.likedStartups.add(id);
+  else state.likedStartups.delete(id);
+
+  // 3. API Call in Background
   const res = await apiFetch(`/interactions/like/${id}`, { method: 'POST' });
-  if (res.success) {
-    if (res.liked) state.likedStartups.add(id);
+  
+  if (!res.success) {
+    // Revert on failure
+    if (isLiked) state.likedStartups.add(id);
     else state.likedStartups.delete(id);
-    // Background sync (silent refresh)
     ui.renderStartupDetail(id, false);
+    showToast(res.message || 'Failed to update like');
+  } else {
+    // Sync actual count from server silently if possible, or just let it be
+    if (res.likesCount !== undefined && countEl) {
+       countEl.innerText = res.likesCount;
+       if (metricEl) metricEl.innerText = res.likesCount;
+    }
   }
 }
 
 async function toggleBookmark(id) {
   if (!state.user) return showToast('Sign in to save');
+  
+  const isBookmarked = state.bookmarkedStartups.has(id);
+  const bmBtn = document.getElementById('bmBtn');
+
+  // 1. Optimistic UI Update
+  if (bmBtn) {
+    bmBtn.classList.toggle('bookmarked', !isBookmarked);
+    bmBtn.innerText = !isBookmarked ? '★ Saved' : '☆ Save';
+  }
+
+  // 2. Local State Update
+  if (!isBookmarked) {
+    state.bookmarkedStartups.add(id);
+  } else {
+    state.bookmarkedStartups.delete(id);
+  }
+
+  // 3. API Call
   const res = await apiFetch(`/interactions/bookmark/${id}`, { method: 'POST' });
+  
   if (res.success) {
     if (res.bookmarked) {
       state.bookmarkedStartups.add(id);
@@ -165,9 +201,16 @@ async function toggleBookmark(id) {
       if (!state.user.bookmarks.includes(id)) state.user.bookmarks.push(id);
     } else {
       state.bookmarkedStartups.delete(id);
-      if (state.user.bookmarks) state.user.bookmarks = state.user.bookmarks.filter(b => (b._id || b) !== id);
+      if (state.user.bookmarks) {
+        state.user.bookmarks = state.user.bookmarks.filter(b => (b._id || b) !== id);
+      }
     }
+  } else {
+    // Revert on failure
+    if (isBookmarked) state.bookmarkedStartups.add(id);
+    else state.bookmarkedStartups.delete(id);
     ui.renderStartupDetail(id, false);
+    showToast(res.message || 'Failed to save');
   }
 }
 
@@ -180,6 +223,11 @@ async function postComment(id) {
   // Optimistic UI Update
   const commentsList = document.getElementById('commentsList');
   if (commentsList) {
+    // Remove "Be the first to comment" if it exists
+    if (state.comments.length === 0) {
+      commentsList.innerHTML = '';
+    }
+
     const tempHtml = ui.commentHTML({
       user: state.user,
       content: text,
@@ -191,19 +239,43 @@ async function postComment(id) {
   input.value = '';
   const res = await apiFetch(`/interactions/comment/${id}`, { method: 'POST', body: { content: text } });
   if (res.success) {
-    ui.renderStartupDetail(id, false);
+    // Sync with server state silently
+    const commentsRes = await apiFetch(`/interactions/comments/${id}`);
+    if (commentsRes.success) {
+      state.comments = commentsRes.comments || commentsRes.data.comments || commentsRes.data;
+      // We could re-render here, but the optimistic one is already there. 
+      // Maybe only re-render if the count changed or after a short delay.
+    }
+  } else {
+    showToast(res.message || 'Failed to post comment');
+    ui.renderStartupDetail(id, false); // Revert to server state
   }
 }
 
 async function addToDealFlow(id) {
   if (!state.user) return showToast('Sign in to track deal flow');
+  
+  const btn = event?.currentTarget || document.querySelector(`[onclick="app.addToDealFlow('${id}')"]`);
+  const isTracking = state.user.dealFlow?.some(d => (d.startup?._id || d.startup) === id);
+
+  // Optimistic UI Update
+  if (btn) {
+    btn.classList.toggle('bookmarked', !isTracking);
+    btn.innerText = !isTracking ? '📈 Tracking' : '📈 Track Deal';
+  }
+
   const res = await apiFetch(`/users/dealflow/${id}`, { method: 'POST' });
   if (res.success) {
     state.user.dealFlow = res.dealFlow;
-    showToast('📈 Added to Deal Flow');
-    ui.renderStartupDetail(id, false);
+    if (!isTracking) showToast('📈 Added to Deal Flow');
+    // ui.renderStartupDetail(id, false); // No need for full re-render if we trust the state
   } else {
-    showToast(res.message || 'Could not add to Deal Flow');
+    // Revert
+    if (btn) {
+      btn.classList.toggle('bookmarked', isTracking);
+      btn.innerText = isTracking ? '📈 Tracking' : '📈 Track Deal';
+    }
+    showToast(res.message || 'Could not update Deal Flow');
   }
 }
 
